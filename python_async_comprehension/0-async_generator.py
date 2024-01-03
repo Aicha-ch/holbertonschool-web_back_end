@@ -12,3 +12,4 @@ async def async_generator() -> Generator[float, None, None]:
         await asyncio.sleep(1)
         yield random.randint(0, 10)
 
+
