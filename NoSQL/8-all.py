@@ -9,4 +9,7 @@ def list_all_documents(mongo_collection):
     listing documents
     """
     result = mongo_collection.school.find()
-    return result if result else []
+    if result:
+        return result
+    return []
+
