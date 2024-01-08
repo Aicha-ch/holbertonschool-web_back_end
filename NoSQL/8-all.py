@@ -6,7 +6,7 @@ function that lists all documents in a collection
 
 def list_all_documents(mongo_collection):
     """
-    listing documents
+    list docs
     """
     result = mongo_collection.school.find()
     if result:
