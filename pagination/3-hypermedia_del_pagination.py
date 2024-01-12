@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Deletion-resilient hypermedia pagination
+nyes
 """
-
 import csv
 import math
-from typing import List
+from typing import List, Dict
 
 
 class Server:
@@ -15,7 +14,6 @@ class Server:
 
     def __init__(self):
         self.__dataset = None
-        self.__indexed_dataset = None
 
     def dataset(self) -> List[List]:
         """Cached dataset
@@ -28,42 +26,53 @@ class Server:
 
         return self.__dataset
 
-    def indexed_dataset(self) -> Dict[int, List]:
-        """Dataset indexed by sorting position, starting at 0
+    def index_range(self, page: int, page_size: int) -> tuple:
+        """a function that"""
+        return ((page * page_size - page_size), (page * page_size))
+
+    def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
         """
-        if self.__indexed_dataset is None:
-            dataset = self.dataset()
-            truncated_dataset = dataset[:1000]
-            self.__indexed_dataset = {
-                i: dataset[i] for i in range(len(dataset))
-            }
-        return self.__indexed_dataset
+        Get page
+        """
+        assert type(page) == int
+        assert type(page_size) == int
+        assert page > 0
+        assert page_size > 0
+        indx = self.index_range(page, page_size)
+        start = indx[0]
+        end = indx[1]
+        x = start
+        result = []
+        csv_file = self.dataset()
+        if len(csv_file) < end:
+            return []
 
-    def get_hyper_index(self, index: int = None, page_size: int = 10) -> Dict:
-        ''' Return dict of pagination data.
-            Dict key/value pairs consist of the following:
-              index - the start index of the page
-              next_index - the start index of the next page
-              page_size
-              page_size - the number of items on the page
-              data - the data in the page itself '''
-        assert 0 <= index < len(self.dataset())
+        while start != end:
+            result.append(csv_file[start])
+            start += 1
 
-        indexed_dataset = self.indexed_dataset()
-        indexed_page = {}
+        return result
 
-        i = index
-        while (len(indexed_page) < page_size and i < len(self.dataset())):
-            if i in indexed_dataset:
-                indexed_page[i] = indexed_dataset[i]
-            i += 1
-
-        page = list(indexed_page.values())
-        page_indices = indexed_page.keys()
-
-        return {
-            'index': index,
-            'next_index': max(page_indices) + 1,
-            'page_size': len(page),
-            'data': page
-        }
+    def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict[str, int]:
+        """
+            Get hyper
+        """
+        total_pages = len(self.dataset()) / page_size
+        test = len(self.dataset()) % page_size
+        if test != 0:
+            total_pages += 1
+        data = self.get_page(page, page_size)
+        next_page = page + 1
+        if self.get_page(page + 1, page_size) == []:
+            next_page = None
+        prev_page = page - 1
+        if prev_page == 0:
+            prev_page = None
+        result = {
+                    'page_size': page_size,
+                    'page': page, 'data': data,
+                    'next_page': next_page,
+                    'prev_page': prev_page,
+                    'total_pages': int(total_pages)
+                }
+        return result
